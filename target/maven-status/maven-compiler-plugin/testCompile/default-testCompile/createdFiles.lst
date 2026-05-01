@@ -1,0 +1,4 @@
+com\prolifics\mfa\repository\CSVUserRepositoryTest.class
+com\prolifics\mfa\util\AuditLoggerTest.class
+com\prolifics\mfa\util\PasswordUtilTest.class
+com\prolifics\mfa\util\TOTPUtilTest.class

@@ -1,0 +1,351 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CSVUserRepository.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">MFA POC - Multi-Factor Authentication Proof of Concept</a> &gt; <a href="index.source.html" class="el_package">com.prolifics.mfa.repository</a> &gt; <span class="el_source">CSVUserRepository.java</span></div><h1>CSVUserRepository.java</h1><pre class="source lang-java linenums">package com.prolifics.mfa.repository;
+
+import com.prolifics.mfa.model.User;
+
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Repository class for managing user data in CSV file.
+ * Provides thread-safe CRUD operations for user management.
+ * 
+ * @author Prolifics MFA POC Team
+ * @version 1.0.0
+ */
+public class CSVUserRepository {
+    
+    private final String usersFile;
+    private static final String CSV_HEADER = &quot;username,password,fullName,email,status,role,mfaSecret&quot;;
+<span class="fc" id="L22">    private final Object lock = new Object();</span>
+    
+    /**
+     * Default constructor using default file path
+     */
+    public CSVUserRepository() {
+<span class="nc" id="L28">        this(&quot;src/main/resources/users.csv&quot;);</span>
+<span class="nc" id="L29">    }</span>
+    
+    /**
+     * Constructor with custom file path
+     *
+     * @param filePath Path to the users CSV file
+     */
+<span class="fc" id="L36">    public CSVUserRepository(String filePath) {</span>
+<span class="pc bpc" id="L37" title="2 of 4 branches missed.">        if (filePath == null || filePath.trim().isEmpty()) {</span>
+<span class="nc" id="L38">            throw new IllegalArgumentException(&quot;File path cannot be null or empty&quot;);</span>
+        }
+<span class="fc" id="L40">        this.usersFile = filePath;</span>
+        
+        // Check if file exists
+<span class="fc" id="L43">        File file = new File(this.usersFile);</span>
+<span class="fc bfc" id="L44" title="All 2 branches covered.">        if (!file.exists()) {</span>
+<span class="fc" id="L45">            throw new RuntimeException(&quot;CSV file does not exist: &quot; + file.getAbsolutePath());</span>
+        }
+        
+        // Verify file is readable
+<span class="pc bpc" id="L49" title="1 of 2 branches missed.">        if (!file.canRead()) {</span>
+<span class="nc" id="L50">            throw new RuntimeException(&quot;CSV file is not readable: &quot; + file.getAbsolutePath());</span>
+        }
+<span class="fc" id="L52">    }</span>
+    
+    /**
+     * Load all users from CSV file
+     * 
+     * @return List of all users
+     */
+    public List&lt;User&gt; loadUsers() {
+<span class="fc" id="L60">        List&lt;User&gt; users = new ArrayList&lt;&gt;();</span>
+        
+<span class="fc" id="L62">        synchronized (lock) {</span>
+<span class="fc" id="L63">            try (BufferedReader reader = new BufferedReader(new FileReader(usersFile))) {</span>
+                String line;
+<span class="fc" id="L65">                boolean firstLine = true;</span>
+                
+<span class="fc bfc" id="L67" title="All 2 branches covered.">                while ((line = reader.readLine()) != null) {</span>
+                    // Skip header
+<span class="fc bfc" id="L69" title="All 2 branches covered.">                    if (firstLine) {</span>
+<span class="fc" id="L70">                        firstLine = false;</span>
+<span class="fc" id="L71">                        continue;</span>
+                    }
+                    
+<span class="fc" id="L74">                    User user = parseUserFromCSV(line);</span>
+<span class="fc bfc" id="L75" title="All 2 branches covered.">                    if (user != null) {</span>
+<span class="fc" id="L76">                        users.add(user);</span>
+                    }
+<span class="fc" id="L78">                }</span>
+<span class="nc" id="L79">            } catch (IOException e) {</span>
+<span class="nc" id="L80">                System.err.println(&quot;Error loading users: &quot; + e.getMessage());</span>
+<span class="nc" id="L81">                e.printStackTrace();</span>
+<span class="fc" id="L82">            }</span>
+<span class="fc" id="L83">        }</span>
+        
+<span class="fc" id="L85">        return users;</span>
+    }
+    
+    /**
+     * Save all users to CSV file
+     * 
+     * @param users List of users to save
+     */
+    public void saveUsers(List&lt;User&gt; users) {
+<span class="fc" id="L94">        synchronized (lock) {</span>
+<span class="fc" id="L95">            try (PrintWriter writer = new PrintWriter(new FileWriter(usersFile))) {</span>
+                // Write header
+<span class="fc" id="L97">                writer.println(CSV_HEADER);</span>
+                
+                // Write users
+<span class="fc bfc" id="L100" title="All 2 branches covered.">                for (User user : users) {</span>
+<span class="fc" id="L101">                    writer.println(userToCSV(user));</span>
+<span class="fc" id="L102">                }</span>
+                
+<span class="fc" id="L104">                writer.flush();</span>
+<span class="nc" id="L105">            } catch (IOException e) {</span>
+<span class="nc" id="L106">                System.err.println(&quot;Error saving users: &quot; + e.getMessage());</span>
+<span class="nc" id="L107">                e.printStackTrace();</span>
+<span class="fc" id="L108">            }</span>
+<span class="fc" id="L109">        }</span>
+<span class="fc" id="L110">    }</span>
+    
+    /**
+     * Find user by username
+     * 
+     * @param username Username to search for
+     * @return User object if found, null otherwise
+     */
+    public User findByUsername(String username) {
+<span class="pc bpc" id="L119" title="2 of 4 branches missed.">        if (username == null || username.trim().isEmpty()) {</span>
+<span class="nc" id="L120">            return null;</span>
+        }
+        
+<span class="fc" id="L123">        List&lt;User&gt; users = loadUsers();</span>
+<span class="fc bfc" id="L124" title="All 2 branches covered.">        for (User user : users) {</span>
+<span class="fc bfc" id="L125" title="All 2 branches covered.">            if (username.equals(user.getUsername())) {  // Changed to case-sensitive</span>
+<span class="fc" id="L126">                return user;</span>
+            }
+<span class="fc" id="L128">        }</span>
+        
+<span class="fc" id="L130">        return null;</span>
+    }
+    
+    /**
+     * Update user's MFA secret
+     * 
+     * @param username Username of the user
+     * @param mfaSecret New MFA secret
+     * @return true if updated successfully, false otherwise
+     */
+    public boolean updateMFASecret(String username, String mfaSecret) {
+        // Validate inputs
+<span class="pc bpc" id="L142" title="2 of 4 branches missed.">        if (username == null || username.trim().isEmpty()) {</span>
+<span class="nc" id="L143">            throw new IllegalArgumentException(&quot;Username cannot be null or empty&quot;);</span>
+        }
+<span class="fc bfc" id="L145" title="All 4 branches covered.">        if (mfaSecret == null || mfaSecret.trim().isEmpty()) {</span>
+<span class="fc" id="L146">            throw new IllegalArgumentException(&quot;MFA secret cannot be null or empty&quot;);</span>
+        }
+        
+<span class="fc" id="L149">        List&lt;User&gt; users = loadUsers();</span>
+<span class="fc" id="L150">        boolean updated = false;</span>
+        
+<span class="fc bfc" id="L152" title="All 2 branches covered.">        for (User user : users) {</span>
+<span class="fc bfc" id="L153" title="All 2 branches covered.">            if (username.equals(user.getUsername())) {  // Changed to case-sensitive</span>
+<span class="fc" id="L154">                user.setMfaSecret(mfaSecret);</span>
+<span class="fc" id="L155">                updated = true;</span>
+<span class="fc" id="L156">                break;</span>
+            }
+<span class="fc" id="L158">        }</span>
+        
+<span class="fc bfc" id="L160" title="All 2 branches covered.">        if (!updated) {</span>
+<span class="fc" id="L161">            throw new IllegalArgumentException(&quot;User not found: &quot; + username);</span>
+        }
+        
+<span class="fc" id="L164">        saveUsers(users);</span>
+<span class="fc" id="L165">        return updated;</span>
+    }
+    
+    /**
+     * Update user information
+     * 
+     * @param updatedUser User object with updated information
+     * @return true if updated successfully, false otherwise
+     */
+    public boolean updateUser(User updatedUser) {
+<span class="nc bnc" id="L175" title="All 4 branches missed.">        if (updatedUser == null || updatedUser.getUsername() == null) {</span>
+<span class="nc" id="L176">            return false;</span>
+        }
+        
+<span class="nc" id="L179">        List&lt;User&gt; users = loadUsers();</span>
+<span class="nc" id="L180">        boolean updated = false;</span>
+        
+<span class="nc bnc" id="L182" title="All 2 branches missed.">        for (int i = 0; i &lt; users.size(); i++) {</span>
+<span class="nc bnc" id="L183" title="All 2 branches missed.">            if (updatedUser.getUsername().equals(users.get(i).getUsername())) {  // Changed to case-sensitive</span>
+<span class="nc" id="L184">                users.set(i, updatedUser);</span>
+<span class="nc" id="L185">                updated = true;</span>
+<span class="nc" id="L186">                break;</span>
+            }
+        }
+        
+<span class="nc bnc" id="L190" title="All 2 branches missed.">        if (updated) {</span>
+<span class="nc" id="L191">            saveUsers(users);</span>
+        }
+        
+<span class="nc" id="L194">        return updated;</span>
+    }
+    
+    /**
+     * Add a new user
+     * 
+     * @param user User to add
+     * @return true if added successfully, false if user already exists
+     */
+    public boolean addUser(User user) {
+<span class="nc bnc" id="L204" title="All 4 branches missed.">        if (user == null || user.getUsername() == null) {</span>
+<span class="nc" id="L205">            return false;</span>
+        }
+        
+        // Check if user already exists
+<span class="nc bnc" id="L209" title="All 2 branches missed.">        if (findByUsername(user.getUsername()) != null) {</span>
+<span class="nc" id="L210">            return false;</span>
+        }
+        
+<span class="nc" id="L213">        List&lt;User&gt; users = loadUsers();</span>
+<span class="nc" id="L214">        users.add(user);</span>
+<span class="nc" id="L215">        saveUsers(users);</span>
+        
+<span class="nc" id="L217">        return true;</span>
+    }
+    
+    /**
+     * Delete a user
+     * 
+     * @param username Username of user to delete
+     * @return true if deleted successfully, false otherwise
+     */
+    public boolean deleteUser(String username) {
+<span class="nc bnc" id="L227" title="All 4 branches missed.">        if (username == null || username.trim().isEmpty()) {</span>
+<span class="nc" id="L228">            return false;</span>
+        }
+        
+<span class="nc" id="L231">        List&lt;User&gt; users = loadUsers();</span>
+<span class="nc" id="L232">        boolean removed = users.removeIf(user -&gt;</span>
+<span class="nc" id="L233">            username.equals(user.getUsername()));  // Changed to case-sensitive</span>
+        
+<span class="nc bnc" id="L235" title="All 2 branches missed.">        if (removed) {</span>
+<span class="nc" id="L236">            saveUsers(users);</span>
+        }
+        
+<span class="nc" id="L239">        return removed;</span>
+    }
+    
+    /**
+     * Get all users
+     * 
+     * @return List of all users
+     */
+    public List&lt;User&gt; getAllUsers() {
+<span class="fc" id="L248">        return loadUsers();</span>
+    }
+    
+    /**
+     * Get count of users
+     * 
+     * @return Number of users
+     */
+    public int getUserCount() {
+<span class="nc" id="L257">        return loadUsers().size();</span>
+    }
+    
+    /**
+     * Get count of active users
+     * 
+     * @return Number of active users
+     */
+    public int getActiveUserCount() {
+<span class="nc" id="L266">        List&lt;User&gt; users = loadUsers();</span>
+<span class="nc" id="L267">        int count = 0;</span>
+<span class="nc bnc" id="L268" title="All 2 branches missed.">        for (User user : users) {</span>
+<span class="nc bnc" id="L269" title="All 2 branches missed.">            if (user.isActive()) {</span>
+<span class="nc" id="L270">                count++;</span>
+            }
+<span class="nc" id="L272">        }</span>
+<span class="nc" id="L273">        return count;</span>
+    }
+    
+    /**
+     * Parse user from CSV line
+     * 
+     * @param csvLine CSV line to parse
+     * @return User object or null if parsing fails
+     */
+    private User parseUserFromCSV(String csvLine) {
+<span class="pc bpc" id="L283" title="2 of 4 branches missed.">        if (csvLine == null || csvLine.trim().isEmpty()) {</span>
+<span class="nc" id="L284">            return null;</span>
+        }
+        
+        try {
+<span class="fc" id="L288">            String[] parts = csvLine.split(&quot;,&quot;, -1);</span>
+<span class="fc bfc" id="L289" title="All 2 branches covered.">            if (parts.length &lt; 7) {</span>
+<span class="fc" id="L290">                return null;</span>
+            }
+            
+<span class="fc" id="L293">            String username = parts[0].trim();</span>
+<span class="fc" id="L294">            String password = parts[1].trim();</span>
+<span class="fc" id="L295">            String fullName = parts[2].trim();</span>
+<span class="fc" id="L296">            String email = parts[3].trim();</span>
+<span class="fc" id="L297">            String status = parts[4].trim();</span>
+<span class="fc" id="L298">            String role = parts[5].trim();</span>
+<span class="fc" id="L299">            String mfaSecret = parts[6].trim();</span>
+            
+            // Handle empty mfaSecret
+<span class="fc bfc" id="L302" title="All 2 branches covered.">            if (mfaSecret.isEmpty()) {</span>
+<span class="fc" id="L303">                mfaSecret = null;</span>
+            }
+            
+<span class="fc" id="L306">            return new User(username, password, fullName, email, status, role, mfaSecret);</span>
+<span class="nc" id="L307">        } catch (Exception e) {</span>
+<span class="nc" id="L308">            System.err.println(&quot;Error parsing user from CSV: &quot; + e.getMessage());</span>
+<span class="nc" id="L309">            return null;</span>
+        }
+    }
+    
+    /**
+     * Convert user to CSV format
+     * 
+     * @param user User to convert
+     * @return CSV formatted string
+     */
+    private String userToCSV(User user) {
+<span class="fc" id="L320">        return String.format(&quot;%s,%s,%s,%s,%s,%s,%s&quot;,</span>
+<span class="fc" id="L321">                user.getUsername(),</span>
+<span class="fc" id="L322">                user.getPassword(),</span>
+<span class="fc" id="L323">                user.getFullName(),</span>
+<span class="fc" id="L324">                user.getEmail(),</span>
+<span class="fc" id="L325">                user.getStatus(),</span>
+<span class="fc" id="L326">                user.getRole(),</span>
+<span class="fc bfc" id="L327" title="All 2 branches covered.">                user.getMfaSecret() != null ? user.getMfaSecret() : &quot;&quot;);</span>
+    }
+    
+    /**
+     * Check if CSV file exists and is readable
+     * 
+     * @return true if file exists and is readable
+     */
+    public boolean isFileAccessible() {
+<span class="nc" id="L336">        File file = new File(usersFile);</span>
+<span class="nc bnc" id="L337" title="All 4 branches missed.">        return file.exists() &amp;&amp; file.canRead();</span>
+    }
+    
+    /**
+     * Get CSV file path
+     *
+     * @return CSV file path
+     */
+    public String getFilePath() {
+<span class="nc" id="L346">        return usersFile;</span>
+    }
+}
+
+// Made with Bob
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

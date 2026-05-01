@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MFASetupServlet.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">MFA POC - Multi-Factor Authentication Proof of Concept</a> &gt; <a href="index.source.html" class="el_package">com.prolifics.mfa.servlet</a> &gt; <span class="el_source">MFASetupServlet.java</span></div><h1>MFASetupServlet.java</h1><pre class="source lang-java linenums">package com.prolifics.mfa.servlet;
+
+import com.prolifics.mfa.model.User;
+import com.prolifics.mfa.repository.CSVUserRepository;
+import com.prolifics.mfa.util.AuditLogger;
+import com.prolifics.mfa.util.TOTPUtil;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import java.io.IOException;
+
+/**
+ * MFASetupServlet handles Multi-Factor Authentication setup for new users.
+ * 
+ * GET: Generate TOTP secret, create QR code URL, and display setup page
+ * POST: Verify initial TOTP code and save secret to user profile
+ * 
+ * Security:
+ * - Requires authenticated session
+ * - One-time setup per user
+ * - Secret stored temporarily in session until verified
+ * 
+ * All MFA setup activities are logged to the audit log.
+ * 
+ * @author Bob
+ * @version 1.0
+ */
+@WebServlet(&quot;/mfa-setup&quot;)
+<span class="nc" id="L33">public class MFASetupServlet extends HttpServlet {</span>
+    
+    private CSVUserRepository userRepository;
+    private AuditLogger auditLogger;
+    
+    /**
+     * Initialize servlet dependencies.
+     */
+    @Override
+    public void init() throws ServletException {
+<span class="nc" id="L43">        super.init();</span>
+        try {
+<span class="nc" id="L45">            String usersPath = getServletContext().getRealPath(&quot;/WEB-INF/classes/users.csv&quot;);</span>
+<span class="nc" id="L46">            String auditPath = getServletContext().getRealPath(&quot;/WEB-INF/classes/audit-log.csv&quot;);</span>
+            
+<span class="nc" id="L48">            this.userRepository = new CSVUserRepository(usersPath);</span>
+<span class="nc" id="L49">            this.auditLogger = new AuditLogger(auditPath);</span>
+<span class="nc" id="L50">        } catch (Exception e) {</span>
+<span class="nc" id="L51">            throw new ServletException(&quot;Failed to initialize MFASetupServlet&quot;, e);</span>
+<span class="nc" id="L52">        }</span>
+<span class="nc" id="L53">    }</span>
+    
+    /**
+     * Display MFA setup page with QR code.
+     * 
+     * Generates a new TOTP secret, creates QR code URL for Google Authenticator,
+     * and stores the secret temporarily in the session.
+     * 
+     * @param request HTTP request
+     * @param response HTTP response
+     * @throws ServletException if servlet error occurs
+     * @throws IOException if I/O error occurs
+     */
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+        
+<span class="nc" id="L70">        HttpSession session = request.getSession(false);</span>
+        
+        // Check if user is authenticated
+<span class="nc bnc" id="L73" title="All 4 branches missed.">        if (session == null || session.getAttribute(&quot;user&quot;) == null) {</span>
+<span class="nc" id="L74">            response.sendRedirect(request.getContextPath() + &quot;/login&quot;);</span>
+<span class="nc" id="L75">            return;</span>
+        }
+        
+<span class="nc" id="L78">        User user = (User) session.getAttribute(&quot;user&quot;);</span>
+<span class="nc" id="L79">        String ipAddress = getClientIpAddress(request);</span>
+        
+        // Check if user already has MFA configured
+<span class="nc bnc" id="L82" title="All 2 branches missed.">        if (user.hasMFA()) {</span>
+            // User already has MFA - redirect to verification
+<span class="nc" id="L84">            response.sendRedirect(request.getContextPath() + &quot;/mfa-verify&quot;);</span>
+<span class="nc" id="L85">            return;</span>
+        }
+        
+        try {
+            // Generate new TOTP secret
+<span class="nc" id="L90">            String secret = TOTPUtil.generateSecret();</span>
+            
+            // Create QR code URL for Google Authenticator
+<span class="nc" id="L93">            String qrCodeURL = TOTPUtil.generateQRCodeURL(user.getUsername(), secret);</span>
+            
+            // Store secret temporarily in session (not saved to CSV yet)
+<span class="nc" id="L96">            session.setAttribute(&quot;mfaSecret&quot;, secret);</span>
+<span class="nc" id="L97">            session.setAttribute(&quot;qrCodeURL&quot;, qrCodeURL);</span>
+            
+            // Log MFA setup initiation
+<span class="nc" id="L100">            auditLogger.log(user.getUsername(), &quot;MFA_SETUP&quot;, &quot;SUCCESS&quot;, ipAddress, </span>
+                          &quot;QR code generated for MFA setup&quot;);
+            
+            // Forward to setup page
+<span class="nc" id="L104">            request.getRequestDispatcher(&quot;/mfa-setup.jsp&quot;).forward(request, response);</span>
+            
+<span class="nc" id="L106">        } catch (Exception e) {</span>
+<span class="nc" id="L107">            auditLogger.log(user.getUsername(), &quot;MFA_SETUP&quot;, &quot;FAILED&quot;, ipAddress, </span>
+<span class="nc" id="L108">                          &quot;Error generating QR code: &quot; + e.getMessage());</span>
+            
+<span class="nc" id="L110">            request.setAttribute(&quot;error&quot;, &quot;Failed to generate MFA setup. Please try again.&quot;);</span>
+<span class="nc" id="L111">            request.getRequestDispatcher(&quot;/mfa-setup.jsp&quot;).forward(request, response);</span>
+<span class="nc" id="L112">        }</span>
+<span class="nc" id="L113">    }</span>
+    
+    /**
+     * Verify initial TOTP code and complete MFA setup.
+     * 
+     * Validates the TOTP code entered by the user. If valid, saves the secret
+     * to the user's profile and marks MFA as verified.
+     * 
+     * @param request HTTP request containing TOTP code
+     * @param response HTTP response
+     * @throws ServletException if servlet error occurs
+     * @throws IOException if I/O error occurs
+     */
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+        
+<span class="nc" id="L130">        HttpSession session = request.getSession(false);</span>
+        
+        // Check if user is authenticated
+<span class="nc bnc" id="L133" title="All 4 branches missed.">        if (session == null || session.getAttribute(&quot;user&quot;) == null) {</span>
+<span class="nc" id="L134">            response.sendRedirect(request.getContextPath() + &quot;/login&quot;);</span>
+<span class="nc" id="L135">            return;</span>
+        }
+        
+<span class="nc" id="L138">        User user = (User) session.getAttribute(&quot;user&quot;);</span>
+<span class="nc" id="L139">        String ipAddress = getClientIpAddress(request);</span>
+<span class="nc" id="L140">        String totpCode = request.getParameter(&quot;totpCode&quot;);</span>
+        
+        // Validate input
+<span class="nc bnc" id="L143" title="All 4 branches missed.">        if (totpCode == null || totpCode.trim().isEmpty()) {</span>
+<span class="nc" id="L144">            auditLogger.log(user.getUsername(), &quot;MFA_SETUP&quot;, &quot;FAILED&quot;, ipAddress, </span>
+                          &quot;Empty TOTP code&quot;);
+            
+<span class="nc" id="L147">            request.setAttribute(&quot;error&quot;, &quot;Please enter the 6-digit code from Google Authenticator&quot;);</span>
+<span class="nc" id="L148">            request.getRequestDispatcher(&quot;/mfa-setup.jsp&quot;).forward(request, response);</span>
+<span class="nc" id="L149">            return;</span>
+        }
+        
+        // Get secret from session
+<span class="nc" id="L153">        String secret = (String) session.getAttribute(&quot;mfaSecret&quot;);</span>
+        
+<span class="nc bnc" id="L155" title="All 2 branches missed.">        if (secret == null) {</span>
+<span class="nc" id="L156">            auditLogger.log(user.getUsername(), &quot;MFA_SETUP&quot;, &quot;FAILED&quot;, ipAddress, </span>
+                          &quot;No secret in session&quot;);
+            
+<span class="nc" id="L159">            request.setAttribute(&quot;error&quot;, &quot;Session expired. Please try again.&quot;);</span>
+<span class="nc" id="L160">            response.sendRedirect(request.getContextPath() + &quot;/mfa-setup&quot;);</span>
+<span class="nc" id="L161">            return;</span>
+        }
+        
+        try {
+            // Validate TOTP code
+<span class="nc bnc" id="L166" title="All 2 branches missed.">            if (TOTPUtil.validateTOTP(secret, totpCode.trim())) {</span>
+                // Valid code - save secret to user profile
+<span class="nc" id="L168">                userRepository.updateMFASecret(user.getUsername(), secret);</span>
+                
+                // Update user object in session
+<span class="nc" id="L171">                user.setMfaSecret(secret);</span>
+<span class="nc" id="L172">                session.setAttribute(&quot;user&quot;, user);</span>
+<span class="nc" id="L173">                session.setAttribute(&quot;mfaVerified&quot;, true);</span>
+                
+                // Remove temporary session attributes
+<span class="nc" id="L176">                session.removeAttribute(&quot;mfaSecret&quot;);</span>
+<span class="nc" id="L177">                session.removeAttribute(&quot;qrCodeURL&quot;);</span>
+                
+                // Log successful MFA setup
+<span class="nc" id="L180">                auditLogger.log(user.getUsername(), &quot;MFA_SETUP&quot;, &quot;SUCCESS&quot;, ipAddress, </span>
+                              &quot;MFA setup completed successfully&quot;);
+<span class="nc" id="L182">                auditLogger.log(user.getUsername(), &quot;MFA_VERIFY_SUCCESS&quot;, &quot;SUCCESS&quot;, ipAddress, </span>
+                              &quot;Initial TOTP verification successful&quot;);
+<span class="nc" id="L184">                auditLogger.log(user.getUsername(), &quot;LOGIN_SUCCESS&quot;, &quot;SUCCESS&quot;, ipAddress, </span>
+                              &quot;User logged in with MFA&quot;);
+                
+                // Redirect to welcome page
+<span class="nc" id="L188">                response.sendRedirect(request.getContextPath() + &quot;/welcome.jsp&quot;);</span>
+                
+            } else {
+                // Invalid code
+<span class="nc" id="L192">                auditLogger.log(user.getUsername(), &quot;MFA_SETUP&quot;, &quot;FAILED&quot;, ipAddress, </span>
+                              &quot;Invalid TOTP code during setup&quot;);
+                
+<span class="nc" id="L195">                request.setAttribute(&quot;error&quot;, &quot;Invalid code. Please try again.&quot;);</span>
+<span class="nc" id="L196">                request.getRequestDispatcher(&quot;/mfa-setup.jsp&quot;).forward(request, response);</span>
+            }
+            
+<span class="nc" id="L199">        } catch (Exception e) {</span>
+<span class="nc" id="L200">            auditLogger.log(user.getUsername(), &quot;MFA_SETUP&quot;, &quot;FAILED&quot;, ipAddress, </span>
+<span class="nc" id="L201">                          &quot;System error: &quot; + e.getMessage());</span>
+            
+<span class="nc" id="L203">            request.setAttribute(&quot;error&quot;, &quot;System error occurred. Please try again.&quot;);</span>
+<span class="nc" id="L204">            request.getRequestDispatcher(&quot;/mfa-setup.jsp&quot;).forward(request, response);</span>
+<span class="nc" id="L205">        }</span>
+<span class="nc" id="L206">    }</span>
+    
+    /**
+     * Get client IP address from request.
+     * Handles proxy headers (X-Forwarded-For) for accurate IP capture.
+     * 
+     * @param request HTTP request
+     * @return client IP address
+     */
+    private String getClientIpAddress(HttpServletRequest request) {
+<span class="nc" id="L216">        String ipAddress = request.getHeader(&quot;X-Forwarded-For&quot;);</span>
+        
+<span class="nc bnc" id="L218" title="All 6 branches missed.">        if (ipAddress == null || ipAddress.isEmpty() || &quot;unknown&quot;.equalsIgnoreCase(ipAddress)) {</span>
+<span class="nc" id="L219">            ipAddress = request.getHeader(&quot;X-Real-IP&quot;);</span>
+        }
+        
+<span class="nc bnc" id="L222" title="All 6 branches missed.">        if (ipAddress == null || ipAddress.isEmpty() || &quot;unknown&quot;.equalsIgnoreCase(ipAddress)) {</span>
+<span class="nc" id="L223">            ipAddress = request.getRemoteAddr();</span>
+        }
+        
+        // If multiple IPs in X-Forwarded-For, take the first one
+<span class="nc bnc" id="L227" title="All 4 branches missed.">        if (ipAddress != null &amp;&amp; ipAddress.contains(&quot;,&quot;)) {</span>
+<span class="nc" id="L228">            ipAddress = ipAddress.split(&quot;,&quot;)[0].trim();</span>
+        }
+        
+<span class="nc bnc" id="L231" title="All 2 branches missed.">        return ipAddress != null ? ipAddress : &quot;unknown&quot;;</span>
+    }
+}
+
+// Made with Bob
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

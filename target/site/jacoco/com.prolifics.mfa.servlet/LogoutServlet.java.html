@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LogoutServlet.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">MFA POC - Multi-Factor Authentication Proof of Concept</a> &gt; <a href="index.source.html" class="el_package">com.prolifics.mfa.servlet</a> &gt; <span class="el_source">LogoutServlet.java</span></div><h1>LogoutServlet.java</h1><pre class="source lang-java linenums">package com.prolifics.mfa.servlet;
+
+import com.prolifics.mfa.model.User;
+import com.prolifics.mfa.util.AuditLogger;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import java.io.IOException;
+
+/**
+ * LogoutServlet handles user logout and session cleanup.
+ * 
+ * GET/POST: Invalidate session, clear attributes, and redirect to login
+ * 
+ * Security:
+ * - Prevents session fixation attacks
+ * - Clears all sensitive session data
+ * - Logs logout events for audit trail
+ * 
+ * All logout events are logged to the audit log.
+ * 
+ * @author Bob
+ * @version 1.0
+ */
+@WebServlet(&quot;/logout&quot;)
+<span class="nc" id="L30">public class LogoutServlet extends HttpServlet {</span>
+    
+    private AuditLogger auditLogger;
+    
+    /**
+     * Initialize servlet dependencies.
+     */
+    @Override
+    public void init() throws ServletException {
+<span class="nc" id="L39">        super.init();</span>
+        try {
+<span class="nc" id="L41">            String auditPath = getServletContext().getRealPath(&quot;/WEB-INF/classes/audit-log.csv&quot;);</span>
+<span class="nc" id="L42">            this.auditLogger = new AuditLogger(auditPath);</span>
+<span class="nc" id="L43">        } catch (Exception e) {</span>
+<span class="nc" id="L44">            throw new ServletException(&quot;Failed to initialize LogoutServlet&quot;, e);</span>
+<span class="nc" id="L45">        }</span>
+<span class="nc" id="L46">    }</span>
+    
+    /**
+     * Handle logout via GET request.
+     * 
+     * @param request HTTP request
+     * @param response HTTP response
+     * @throws ServletException if servlet error occurs
+     * @throws IOException if I/O error occurs
+     */
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+<span class="nc" id="L59">        handleLogout(request, response);</span>
+<span class="nc" id="L60">    }</span>
+    
+    /**
+     * Handle logout via POST request.
+     * 
+     * @param request HTTP request
+     * @param response HTTP response
+     * @throws ServletException if servlet error occurs
+     * @throws IOException if I/O error occurs
+     */
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+<span class="nc" id="L73">        handleLogout(request, response);</span>
+<span class="nc" id="L74">    }</span>
+    
+    /**
+     * Process logout request.
+     * 
+     * Invalidates the session, clears all session attributes, logs the logout event,
+     * and redirects to the login page.
+     * 
+     * @param request HTTP request
+     * @param response HTTP response
+     * @throws ServletException if servlet error occurs
+     * @throws IOException if I/O error occurs
+     */
+    private void handleLogout(HttpServletRequest request, HttpServletResponse response) 
+            throws ServletException, IOException {
+        
+<span class="nc" id="L90">        HttpSession session = request.getSession(false);</span>
+<span class="nc" id="L91">        String username = &quot;unknown&quot;;</span>
+<span class="nc" id="L92">        String ipAddress = getClientIpAddress(request);</span>
+        
+        // Get username before invalidating session
+<span class="nc bnc" id="L95" title="All 2 branches missed.">        if (session != null) {</span>
+<span class="nc" id="L96">            User user = (User) session.getAttribute(&quot;user&quot;);</span>
+<span class="nc bnc" id="L97" title="All 2 branches missed.">            if (user != null) {</span>
+<span class="nc" id="L98">                username = user.getUsername();</span>
+            }
+            
+            try {
+                // Log logout event
+<span class="nc" id="L103">                auditLogger.log(username, &quot;LOGOUT&quot;, &quot;SUCCESS&quot;, ipAddress, </span>
+                              &quot;User logged out successfully&quot;);
+<span class="nc" id="L105">            } catch (Exception e) {</span>
+                // Log error but continue with logout
+<span class="nc" id="L107">                System.err.println(&quot;Failed to log logout event: &quot; + e.getMessage());</span>
+<span class="nc" id="L108">            }</span>
+            
+            // Invalidate session to clear all attributes and prevent session fixation
+<span class="nc" id="L111">            session.invalidate();</span>
+        }
+        
+        // Redirect to login page with logout message
+<span class="nc" id="L115">        response.sendRedirect(request.getContextPath() + &quot;/login?logout=true&quot;);</span>
+<span class="nc" id="L116">    }</span>
+    
+    /**
+     * Get client IP address from request.
+     * Handles proxy headers (X-Forwarded-For) for accurate IP capture.
+     * 
+     * @param request HTTP request
+     * @return client IP address
+     */
+    private String getClientIpAddress(HttpServletRequest request) {
+<span class="nc" id="L126">        String ipAddress = request.getHeader(&quot;X-Forwarded-For&quot;);</span>
+        
+<span class="nc bnc" id="L128" title="All 6 branches missed.">        if (ipAddress == null || ipAddress.isEmpty() || &quot;unknown&quot;.equalsIgnoreCase(ipAddress)) {</span>
+<span class="nc" id="L129">            ipAddress = request.getHeader(&quot;X-Real-IP&quot;);</span>
+        }
+        
+<span class="nc bnc" id="L132" title="All 6 branches missed.">        if (ipAddress == null || ipAddress.isEmpty() || &quot;unknown&quot;.equalsIgnoreCase(ipAddress)) {</span>
+<span class="nc" id="L133">            ipAddress = request.getRemoteAddr();</span>
+        }
+        
+        // If multiple IPs in X-Forwarded-For, take the first one
+<span class="nc bnc" id="L137" title="All 4 branches missed.">        if (ipAddress != null &amp;&amp; ipAddress.contains(&quot;,&quot;)) {</span>
+<span class="nc" id="L138">            ipAddress = ipAddress.split(&quot;,&quot;)[0].trim();</span>
+        }
+        
+<span class="nc bnc" id="L141" title="All 2 branches missed.">        return ipAddress != null ? ipAddress : &quot;unknown&quot;;</span>
+    }
+}
+
+// Made with Bob
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>

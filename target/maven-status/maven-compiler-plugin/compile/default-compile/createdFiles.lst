@@ -1,0 +1,10 @@
+com\prolifics\mfa\util\TOTPUtil.class
+com\prolifics\mfa\repository\CSVUserRepository.class
+com\prolifics\mfa\servlet\MFAVerifyServlet.class
+com\prolifics\mfa\servlet\LogoutServlet.class
+com\prolifics\mfa\util\AuditLogger.class
+com\prolifics\mfa\servlet\MFASetupServlet.class
+com\prolifics\mfa\model\User.class
+com\prolifics\mfa\servlet\LoginServlet.class
+com\prolifics\mfa\util\PasswordUtil.class
+com\prolifics\mfa\model\AuditLog.class
