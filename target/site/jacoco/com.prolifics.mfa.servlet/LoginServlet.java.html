@@ -43,15 +43,16 @@ import java.io.IOException;
     public void init() throws ServletException {
 <span class="nc" id="L44">        super.init();</span>
         try {
-<span class="nc" id="L46">            String usersPath = getServletContext().getRealPath(&quot;/WEB-INF/classes/users.csv&quot;);</span>
-<span class="nc" id="L47">            String auditPath = getServletContext().getRealPath(&quot;/WEB-INF/classes/audit-log.csv&quot;);</span>
+            // Get the real path directly to the CSV files
+<span class="nc" id="L47">            String usersPath = getServletContext().getRealPath(&quot;/WEB-INF/classes/users.csv&quot;);</span>
+<span class="nc" id="L48">            String auditPath = getServletContext().getRealPath(&quot;/WEB-INF/classes/audit-log.csv&quot;);</span>
             
-<span class="nc" id="L49">            this.userRepository = new CSVUserRepository(usersPath);</span>
-<span class="nc" id="L50">            this.auditLogger = new AuditLogger(auditPath);</span>
-<span class="nc" id="L51">        } catch (Exception e) {</span>
-<span class="nc" id="L52">            throw new ServletException(&quot;Failed to initialize LoginServlet&quot;, e);</span>
-<span class="nc" id="L53">        }</span>
-<span class="nc" id="L54">    }</span>
+<span class="nc" id="L50">            this.userRepository = new CSVUserRepository(usersPath);</span>
+<span class="nc" id="L51">            this.auditLogger = new AuditLogger(auditPath);</span>
+<span class="nc" id="L52">        } catch (Exception e) {</span>
+<span class="nc" id="L53">            throw new ServletException(&quot;Failed to initialize LoginServlet&quot;, e);</span>
+<span class="nc" id="L54">        }</span>
+<span class="nc" id="L55">    }</span>
     
     /**
      * Display login form.
@@ -65,8 +66,8 @@ import java.io.IOException;
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
         // Forward to login page
-<span class="nc" id="L68">        request.getRequestDispatcher(&quot;/login.jsp&quot;).forward(request, response);</span>
-<span class="nc" id="L69">    }</span>
+<span class="nc" id="L69">        request.getRequestDispatcher(&quot;/login.jsp&quot;).forward(request, response);</span>
+<span class="nc" id="L70">    }</span>
     
     /**
      * Process login credentials.
@@ -83,85 +84,85 @@ import java.io.IOException;
     protected void doPost(HttpServletRequest request, HttpServletResponse response) 
             throws ServletException, IOException {
         
-<span class="nc" id="L86">        String username = request.getParameter(&quot;username&quot;);</span>
-<span class="nc" id="L87">        String password = request.getParameter(&quot;password&quot;);</span>
-<span class="nc" id="L88">        String ipAddress = getClientIpAddress(request);</span>
+<span class="nc" id="L87">        String username = request.getParameter(&quot;username&quot;);</span>
+<span class="nc" id="L88">        String password = request.getParameter(&quot;password&quot;);</span>
+<span class="nc" id="L89">        String ipAddress = getClientIpAddress(request);</span>
         
         // Validate input
-<span class="nc bnc" id="L91" title="All 6 branches missed.">        if (username == null || username.trim().isEmpty() || </span>
-<span class="nc bnc" id="L92" title="All 2 branches missed.">            password == null || password.trim().isEmpty()) {</span>
+<span class="nc bnc" id="L92" title="All 6 branches missed.">        if (username == null || username.trim().isEmpty() || </span>
+<span class="nc bnc" id="L93" title="All 2 branches missed.">            password == null || password.trim().isEmpty()) {</span>
             
-<span class="nc bnc" id="L94" title="All 2 branches missed.">            auditLogger.log(username != null ? username : &quot;unknown&quot;, </span>
+<span class="nc bnc" id="L95" title="All 2 branches missed.">            auditLogger.log(username != null ? username : &quot;unknown&quot;, </span>
                           &quot;LOGIN_ATTEMPT&quot;, &quot;FAILED&quot;, ipAddress, 
                           &quot;Empty username or password&quot;);
             
-<span class="nc" id="L98">            request.setAttribute(&quot;error&quot;, &quot;Username and password are required&quot;);</span>
-<span class="nc" id="L99">            request.getRequestDispatcher(&quot;/login.jsp&quot;).forward(request, response);</span>
-<span class="nc" id="L100">            return;</span>
+<span class="nc" id="L99">            request.setAttribute(&quot;error&quot;, &quot;Username and password are required&quot;);</span>
+<span class="nc" id="L100">            request.getRequestDispatcher(&quot;/login.jsp&quot;).forward(request, response);</span>
+<span class="nc" id="L101">            return;</span>
         }
         
         try {
             // Find user
-<span class="nc" id="L105">            User user = userRepository.findByUsername(username.trim());</span>
+<span class="nc" id="L106">            User user = userRepository.findByUsername(username.trim());</span>
             
-<span class="nc bnc" id="L107" title="All 2 branches missed.">            if (user == null) {</span>
+<span class="nc bnc" id="L108" title="All 2 branches missed.">            if (user == null) {</span>
                 // User not found
-<span class="nc" id="L109">                auditLogger.log(username, &quot;LOGIN_ATTEMPT&quot;, &quot;FAILED&quot;, ipAddress, </span>
+<span class="nc" id="L110">                auditLogger.log(username, &quot;LOGIN_ATTEMPT&quot;, &quot;FAILED&quot;, ipAddress, </span>
                               &quot;User not found&quot;);
                 
-<span class="nc" id="L112">                request.setAttribute(&quot;error&quot;, &quot;Invalid username or password&quot;);</span>
-<span class="nc" id="L113">                request.getRequestDispatcher(&quot;/login.jsp&quot;).forward(request, response);</span>
-<span class="nc" id="L114">                return;</span>
+<span class="nc" id="L113">                request.setAttribute(&quot;error&quot;, &quot;Invalid username or password&quot;);</span>
+<span class="nc" id="L114">                request.getRequestDispatcher(&quot;/login.jsp&quot;).forward(request, response);</span>
+<span class="nc" id="L115">                return;</span>
             }
             
             // Check if account is active
-<span class="nc bnc" id="L118" title="All 2 branches missed.">            if (!user.isActive()) {</span>
-<span class="nc" id="L119">                auditLogger.log(username, &quot;LOGIN_ATTEMPT&quot;, &quot;FAILED&quot;, ipAddress, </span>
+<span class="nc bnc" id="L119" title="All 2 branches missed.">            if (!user.isActive()) {</span>
+<span class="nc" id="L120">                auditLogger.log(username, &quot;LOGIN_ATTEMPT&quot;, &quot;FAILED&quot;, ipAddress, </span>
                               &quot;Account disabled&quot;);
                 
-<span class="nc" id="L122">                request.setAttribute(&quot;error&quot;, &quot;Account is disabled. Please contact administrator.&quot;);</span>
-<span class="nc" id="L123">                request.getRequestDispatcher(&quot;/login.jsp&quot;).forward(request, response);</span>
-<span class="nc" id="L124">                return;</span>
+<span class="nc" id="L123">                request.setAttribute(&quot;error&quot;, &quot;Account is disabled. Please contact administrator.&quot;);</span>
+<span class="nc" id="L124">                request.getRequestDispatcher(&quot;/login.jsp&quot;).forward(request, response);</span>
+<span class="nc" id="L125">                return;</span>
             }
             
             // Verify password
-<span class="nc bnc" id="L128" title="All 2 branches missed.">            if (!PasswordUtil.verifyPassword(password, user.getPassword())) {</span>
-<span class="nc" id="L129">                auditLogger.log(username, &quot;LOGIN_ATTEMPT&quot;, &quot;FAILED&quot;, ipAddress, </span>
+<span class="nc bnc" id="L129" title="All 2 branches missed.">            if (!PasswordUtil.verifyPassword(password, user.getPassword())) {</span>
+<span class="nc" id="L130">                auditLogger.log(username, &quot;LOGIN_ATTEMPT&quot;, &quot;FAILED&quot;, ipAddress, </span>
                               &quot;Invalid password&quot;);
                 
-<span class="nc" id="L132">                request.setAttribute(&quot;error&quot;, &quot;Invalid username or password&quot;);</span>
-<span class="nc" id="L133">                request.getRequestDispatcher(&quot;/login.jsp&quot;).forward(request, response);</span>
-<span class="nc" id="L134">                return;</span>
+<span class="nc" id="L133">                request.setAttribute(&quot;error&quot;, &quot;Invalid username or password&quot;);</span>
+<span class="nc" id="L134">                request.getRequestDispatcher(&quot;/login.jsp&quot;).forward(request, response);</span>
+<span class="nc" id="L135">                return;</span>
             }
             
             // Password is valid - log successful login attempt
-<span class="nc" id="L138">            auditLogger.log(username, &quot;LOGIN_ATTEMPT&quot;, &quot;SUCCESS&quot;, ipAddress, </span>
+<span class="nc" id="L139">            auditLogger.log(username, &quot;LOGIN_ATTEMPT&quot;, &quot;SUCCESS&quot;, ipAddress, </span>
                           &quot;Valid credentials&quot;);
             
             // Create session and store user
-<span class="nc" id="L142">            HttpSession session = request.getSession(true);</span>
-<span class="nc" id="L143">            session.setAttribute(&quot;user&quot;, user);</span>
-<span class="nc" id="L144">            session.setAttribute(&quot;authenticated&quot;, true);</span>
-<span class="nc" id="L145">            session.setAttribute(&quot;mfaVerified&quot;, false);</span>
+<span class="nc" id="L143">            HttpSession session = request.getSession(true);</span>
+<span class="nc" id="L144">            session.setAttribute(&quot;user&quot;, user);</span>
+<span class="nc" id="L145">            session.setAttribute(&quot;authenticated&quot;, true);</span>
+<span class="nc" id="L146">            session.setAttribute(&quot;mfaVerified&quot;, false);</span>
             
             // Route based on MFA configuration
-<span class="nc bnc" id="L148" title="All 2 branches missed.">            if (user.hasMFA()) {</span>
+<span class="nc bnc" id="L149" title="All 2 branches missed.">            if (user.hasMFA()) {</span>
                 // User has MFA configured - go to verification
-<span class="nc" id="L150">                response.sendRedirect(request.getContextPath() + &quot;/mfa-verify&quot;);</span>
+<span class="nc" id="L151">                response.sendRedirect(request.getContextPath() + &quot;/mfa-verify&quot;);</span>
             } else {
                 // User needs to set up MFA
-<span class="nc" id="L153">                response.sendRedirect(request.getContextPath() + &quot;/mfa-setup&quot;);</span>
+<span class="nc" id="L154">                response.sendRedirect(request.getContextPath() + &quot;/mfa-setup&quot;);</span>
             }
             
-<span class="nc" id="L156">        } catch (Exception e) {</span>
+<span class="nc" id="L157">        } catch (Exception e) {</span>
             // Log system error
-<span class="nc" id="L158">            auditLogger.log(username, &quot;LOGIN_ATTEMPT&quot;, &quot;FAILED&quot;, ipAddress, </span>
-<span class="nc" id="L159">                          &quot;System error: &quot; + e.getMessage());</span>
+<span class="nc" id="L159">            auditLogger.log(username, &quot;LOGIN_ATTEMPT&quot;, &quot;FAILED&quot;, ipAddress, </span>
+<span class="nc" id="L160">                          &quot;System error: &quot; + e.getMessage());</span>
             
-<span class="nc" id="L161">            request.setAttribute(&quot;error&quot;, &quot;System error occurred. Please try again.&quot;);</span>
-<span class="nc" id="L162">            request.getRequestDispatcher(&quot;/login.jsp&quot;).forward(request, response);</span>
-<span class="nc" id="L163">        }</span>
-<span class="nc" id="L164">    }</span>
+<span class="nc" id="L162">            request.setAttribute(&quot;error&quot;, &quot;System error occurred. Please try again.&quot;);</span>
+<span class="nc" id="L163">            request.getRequestDispatcher(&quot;/login.jsp&quot;).forward(request, response);</span>
+<span class="nc" id="L164">        }</span>
+<span class="nc" id="L165">    }</span>
     
     /**
      * Get client IP address from request.
@@ -171,22 +172,22 @@ import java.io.IOException;
      * @return client IP address
      */
     private String getClientIpAddress(HttpServletRequest request) {
-<span class="nc" id="L174">        String ipAddress = request.getHeader(&quot;X-Forwarded-For&quot;);</span>
+<span class="nc" id="L175">        String ipAddress = request.getHeader(&quot;X-Forwarded-For&quot;);</span>
         
-<span class="nc bnc" id="L176" title="All 6 branches missed.">        if (ipAddress == null || ipAddress.isEmpty() || &quot;unknown&quot;.equalsIgnoreCase(ipAddress)) {</span>
-<span class="nc" id="L177">            ipAddress = request.getHeader(&quot;X-Real-IP&quot;);</span>
+<span class="nc bnc" id="L177" title="All 6 branches missed.">        if (ipAddress == null || ipAddress.isEmpty() || &quot;unknown&quot;.equalsIgnoreCase(ipAddress)) {</span>
+<span class="nc" id="L178">            ipAddress = request.getHeader(&quot;X-Real-IP&quot;);</span>
         }
         
-<span class="nc bnc" id="L180" title="All 6 branches missed.">        if (ipAddress == null || ipAddress.isEmpty() || &quot;unknown&quot;.equalsIgnoreCase(ipAddress)) {</span>
-<span class="nc" id="L181">            ipAddress = request.getRemoteAddr();</span>
+<span class="nc bnc" id="L181" title="All 6 branches missed.">        if (ipAddress == null || ipAddress.isEmpty() || &quot;unknown&quot;.equalsIgnoreCase(ipAddress)) {</span>
+<span class="nc" id="L182">            ipAddress = request.getRemoteAddr();</span>
         }
         
         // If multiple IPs in X-Forwarded-For, take the first one
-<span class="nc bnc" id="L185" title="All 4 branches missed.">        if (ipAddress != null &amp;&amp; ipAddress.contains(&quot;,&quot;)) {</span>
-<span class="nc" id="L186">            ipAddress = ipAddress.split(&quot;,&quot;)[0].trim();</span>
+<span class="nc bnc" id="L186" title="All 4 branches missed.">        if (ipAddress != null &amp;&amp; ipAddress.contains(&quot;,&quot;)) {</span>
+<span class="nc" id="L187">            ipAddress = ipAddress.split(&quot;,&quot;)[0].trim();</span>
         }
         
-<span class="nc bnc" id="L189" title="All 2 branches missed.">        return ipAddress != null ? ipAddress : &quot;unknown&quot;;</span>
+<span class="nc bnc" id="L190" title="All 2 branches missed.">        return ipAddress != null ? ipAddress : &quot;unknown&quot;;</span>
     }
 }
 

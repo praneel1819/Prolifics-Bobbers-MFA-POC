@@ -1,6 +1,0 @@
-username,password,fullName,email,status,role,mfaSecret
-john.smith,$2a$12$TI5fSTZcKBzTSYT4dxcxJOQSqEsIToGLXgkljn0UYGEDj6uVkSOpS,John Smith,john.smith@prolifics.com,ACTIVE,USER,
-jane.doe,$2a$12$EdqZZkXwoiV/WcnOS5cweueNJHhQrKKeZi0EG.dtTDW1Ix9LBf2kq,Jane Doe,jane.doe@prolifics.com,ACTIVE,USER,JBSWY3DPEHPK3PXP
-admin.user,$2a$12$TgIeNZ64nLEVseRjLyWQU.vcV2Si1jPT7VnQoNEaCs16Qq8Y.r6aO,Admin User,admin@prolifics.com,ACTIVE,ADMIN,JBSWY3DPEHPK3PXQ
-disabled.user,$2a$12$8yJZ4vO2/EpcvMyeqRzB9OnewGxg9QxdH5jGcGq3mB9UnH8DTvsim,Disabled User,disabled@prolifics.com,DISABLED,USER,
-bob.wilson,$2a$12$NRpxfViEjhORoSzaQewpluFUlWlr27O.ASFz4PRuirMOlXH8z0aNq,Bob Wilson,bob.wilson@prolifics.com,ACTIVE,USER,

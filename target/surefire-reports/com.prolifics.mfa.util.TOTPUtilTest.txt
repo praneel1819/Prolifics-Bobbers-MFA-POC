@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: com.prolifics.mfa.util.TOTPUtilTest
 -------------------------------------------------------------------------------
-Tests run: 21, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.547 s - in com.prolifics.mfa.util.TOTPUtilTest
+Tests run: 21, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.097 s - in com.prolifics.mfa.util.TOTPUtilTest

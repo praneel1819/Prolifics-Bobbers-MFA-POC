@@ -8,7 +8,6 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
@@ -71,8 +70,8 @@ public class TOTPUtil {
         }
         
         try {
-            String accountName = URLEncoder.encode(username.trim(), StandardCharsets.UTF_8.toString());
-            String issuerEncoded = URLEncoder.encode(ISSUER, StandardCharsets.UTF_8.toString());
+            String accountName = URLEncoder.encode(username.trim(), "UTF-8");
+            String issuerEncoded = URLEncoder.encode(ISSUER, "UTF-8");
             
             String otpauthURL = String.format(
                 "otpauth://totp/%s:%s?secret=%s&issuer=%s&algorithm=SHA1&digits=%d&period=%d",
@@ -290,7 +289,7 @@ public class TOTPUtil {
         
         String otpauthURL = generateQRCodeURL(username, secret);
         try {
-            String encodedURL = URLEncoder.encode(otpauthURL, StandardCharsets.UTF_8.toString());
+            String encodedURL = URLEncoder.encode(otpauthURL, "UTF-8");
             return String.format(
                 "https://chart.googleapis.com/chart?chs=200x200&chld=M|0&cht=qr&chl=%s",
                 encodedURL

@@ -8,7 +8,6 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
@@ -27,15 +26,15 @@ public class TOTPUtil {
     
     private static final String ALGORITHM = &quot;HmacSHA1&quot;;
     private static final int SECRET_SIZE = 20; // 160 bits
-<span class="fc" id="L30">    private static final Duration TIME_STEP = Duration.ofSeconds(30);</span>
+<span class="fc" id="L29">    private static final Duration TIME_STEP = Duration.ofSeconds(30);</span>
     private static final int CODE_DIGITS = 6;
     private static final String ISSUER = &quot;Prolifics-MFA-POC&quot;;
     
     /**
      * Private constructor to prevent instantiation
      */
-<span class="nc" id="L37">    private TOTPUtil() {</span>
-<span class="nc" id="L38">        throw new UnsupportedOperationException(&quot;Utility class cannot be instantiated&quot;);</span>
+<span class="nc" id="L36">    private TOTPUtil() {</span>
+<span class="nc" id="L37">        throw new UnsupportedOperationException(&quot;Utility class cannot be instantiated&quot;);</span>
     }
     
     /**
@@ -44,12 +43,12 @@ public class TOTPUtil {
      * @return Base32 encoded secret key
      */
     public static String generateSecret() {
-<span class="fc" id="L47">        SecureRandom random = new SecureRandom();</span>
-<span class="fc" id="L48">        byte[] bytes = new byte[SECRET_SIZE];</span>
-<span class="fc" id="L49">        random.nextBytes(bytes);</span>
+<span class="fc" id="L46">        SecureRandom random = new SecureRandom();</span>
+<span class="fc" id="L47">        byte[] bytes = new byte[SECRET_SIZE];</span>
+<span class="fc" id="L48">        random.nextBytes(bytes);</span>
         
-<span class="fc" id="L51">        Base32 base32 = new Base32();</span>
-<span class="fc" id="L52">        return base32.encodeToString(bytes);</span>
+<span class="fc" id="L50">        Base32 base32 = new Base32();</span>
+<span class="fc" id="L51">        return base32.encodeToString(bytes);</span>
     }
     
     /**
@@ -60,37 +59,37 @@ public class TOTPUtil {
      * @return QR code URL for Google Authenticator
      */
     public static String generateQRCodeURL(String username, String secret) {
-<span class="pc bpc" id="L63" title="2 of 4 branches missed.">        if (username == null || username.trim().isEmpty()) {</span>
-<span class="nc" id="L64">            throw new IllegalArgumentException(&quot;Username cannot be null or empty&quot;);</span>
+<span class="pc bpc" id="L62" title="2 of 4 branches missed.">        if (username == null || username.trim().isEmpty()) {</span>
+<span class="nc" id="L63">            throw new IllegalArgumentException(&quot;Username cannot be null or empty&quot;);</span>
         }
-<span class="pc bpc" id="L66" title="2 of 4 branches missed.">        if (secret == null || secret.trim().isEmpty()) {</span>
-<span class="nc" id="L67">            throw new IllegalArgumentException(&quot;Secret cannot be null or empty&quot;);</span>
+<span class="pc bpc" id="L65" title="2 of 4 branches missed.">        if (secret == null || secret.trim().isEmpty()) {</span>
+<span class="nc" id="L66">            throw new IllegalArgumentException(&quot;Secret cannot be null or empty&quot;);</span>
         }
-<span class="pc bpc" id="L69" title="1 of 2 branches missed.">        if (!isValidSecret(secret.trim())) {</span>
-<span class="nc" id="L70">            throw new IllegalArgumentException(&quot;Invalid Base32 secret format&quot;);</span>
+<span class="pc bpc" id="L68" title="1 of 2 branches missed.">        if (!isValidSecret(secret.trim())) {</span>
+<span class="nc" id="L69">            throw new IllegalArgumentException(&quot;Invalid Base32 secret format&quot;);</span>
         }
         
         try {
-<span class="fc" id="L74">            String accountName = URLEncoder.encode(username.trim(), StandardCharsets.UTF_8.toString());</span>
-<span class="fc" id="L75">            String issuerEncoded = URLEncoder.encode(ISSUER, StandardCharsets.UTF_8.toString());</span>
+<span class="fc" id="L73">            String accountName = URLEncoder.encode(username.trim(), &quot;UTF-8&quot;);</span>
+<span class="fc" id="L74">            String issuerEncoded = URLEncoder.encode(ISSUER, &quot;UTF-8&quot;);</span>
             
-<span class="fc" id="L77">            String otpauthURL = String.format(</span>
+<span class="fc" id="L76">            String otpauthURL = String.format(</span>
                 &quot;otpauth://totp/%s:%s?secret=%s&amp;issuer=%s&amp;algorithm=SHA1&amp;digits=%d&amp;period=%d&quot;,
                 issuerEncoded,
                 accountName,
-<span class="fc" id="L81">                secret.trim(),</span>
+<span class="fc" id="L80">                secret.trim(),</span>
                 issuerEncoded,
-<span class="fc" id="L83">                CODE_DIGITS,</span>
-<span class="fc" id="L84">                TIME_STEP.getSeconds()</span>
+<span class="fc" id="L82">                CODE_DIGITS,</span>
+<span class="fc" id="L83">                TIME_STEP.getSeconds()</span>
             );
             
             // Return Google Charts API URL - encode only the otpauth URL for the chl parameter
-<span class="fc" id="L88">            return String.format(</span>
+<span class="fc" id="L87">            return String.format(</span>
                 &quot;https://chart.googleapis.com/chart?chs=200x200&amp;chld=M|0&amp;cht=qr&amp;chl=%s&quot;,
                 otpauthURL
             );
-<span class="nc" id="L92">        } catch (UnsupportedEncodingException e) {</span>
-<span class="nc" id="L93">            throw new RuntimeException(&quot;UTF-8 encoding not supported&quot;, e);</span>
+<span class="nc" id="L91">        } catch (UnsupportedEncodingException e) {</span>
+<span class="nc" id="L92">            throw new RuntimeException(&quot;UTF-8 encoding not supported&quot;, e);</span>
         }
     }
     
@@ -103,48 +102,48 @@ public class TOTPUtil {
      * @return true if code is valid, false otherwise
      */
     public static boolean validateTOTP(String secret, String code) {
-<span class="fc bfc" id="L106" title="All 2 branches covered.">        if (secret == null) {</span>
-<span class="fc" id="L107">            throw new IllegalArgumentException(&quot;Secret cannot be null&quot;);</span>
+<span class="fc bfc" id="L105" title="All 2 branches covered.">        if (secret == null) {</span>
+<span class="fc" id="L106">            throw new IllegalArgumentException(&quot;Secret cannot be null&quot;);</span>
         }
-<span class="fc bfc" id="L109" title="All 2 branches covered.">        if (code == null) {</span>
-<span class="fc" id="L110">            throw new IllegalArgumentException(&quot;TOTP code cannot be null&quot;);</span>
+<span class="fc bfc" id="L108" title="All 2 branches covered.">        if (code == null) {</span>
+<span class="fc" id="L109">            throw new IllegalArgumentException(&quot;TOTP code cannot be null&quot;);</span>
         }
         
         // Handle empty strings - return false instead of throwing
-<span class="pc bpc" id="L114" title="1 of 4 branches missed.">        if (secret.trim().isEmpty() || code.trim().isEmpty()) {</span>
-<span class="fc" id="L115">            return false;</span>
+<span class="pc bpc" id="L113" title="1 of 4 branches missed.">        if (secret.trim().isEmpty() || code.trim().isEmpty()) {</span>
+<span class="fc" id="L114">            return false;</span>
         }
         
         // Trim whitespace from code
-<span class="fc" id="L119">        String trimmedCode = code.trim();</span>
+<span class="fc" id="L118">        String trimmedCode = code.trim();</span>
         
-<span class="fc bfc" id="L121" title="All 2 branches covered.">        if (trimmedCode.length() != CODE_DIGITS) {</span>
-<span class="fc" id="L122">            return false;</span>
+<span class="fc bfc" id="L120" title="All 2 branches covered.">        if (trimmedCode.length() != CODE_DIGITS) {</span>
+<span class="fc" id="L121">            return false;</span>
         }
         
         // Validate secret format
-<span class="fc bfc" id="L126" title="All 2 branches covered.">        if (!isValidSecret(secret.trim())) {</span>
-<span class="fc" id="L127">            return false;</span>
+<span class="fc bfc" id="L125" title="All 2 branches covered.">        if (!isValidSecret(secret.trim())) {</span>
+<span class="fc" id="L126">            return false;</span>
         }
         
         try {
-<span class="fc" id="L131">            Base32 base32 = new Base32();</span>
-<span class="fc" id="L132">            byte[] decodedKey = base32.decode(secret.trim());</span>
+<span class="fc" id="L130">            Base32 base32 = new Base32();</span>
+<span class="fc" id="L131">            byte[] decodedKey = base32.decode(secret.trim());</span>
             
             // Check current time window and adjacent windows (±1) for clock drift
-<span class="fc" id="L135">            long currentTimeStep = Instant.now().getEpochSecond() / TIME_STEP.getSeconds();</span>
+<span class="fc" id="L134">            long currentTimeStep = Instant.now().getEpochSecond() / TIME_STEP.getSeconds();</span>
             
-<span class="fc bfc" id="L137" title="All 2 branches covered.">            for (int i = -1; i &lt;= 1; i++) {</span>
-<span class="fc" id="L138">                String generatedCode = generateTOTPCode(decodedKey, currentTimeStep + i);</span>
-<span class="fc bfc" id="L139" title="All 2 branches covered.">                if (trimmedCode.equals(generatedCode)) {</span>
-<span class="fc" id="L140">                    return true;</span>
+<span class="fc bfc" id="L136" title="All 2 branches covered.">            for (int i = -1; i &lt;= 1; i++) {</span>
+<span class="fc" id="L137">                String generatedCode = generateTOTPCode(decodedKey, currentTimeStep + i);</span>
+<span class="fc bfc" id="L138" title="All 2 branches covered.">                if (trimmedCode.equals(generatedCode)) {</span>
+<span class="fc" id="L139">                    return true;</span>
                 }
             }
             
-<span class="fc" id="L144">            return false;</span>
-<span class="nc" id="L145">        } catch (Exception e) {</span>
-<span class="nc" id="L146">            System.err.println(&quot;Error validating TOTP: &quot; + e.getMessage());</span>
-<span class="nc" id="L147">            return false;</span>
+<span class="fc" id="L143">            return false;</span>
+<span class="nc" id="L144">        } catch (Exception e) {</span>
+<span class="nc" id="L145">            System.err.println(&quot;Error validating TOTP: &quot; + e.getMessage());</span>
+<span class="nc" id="L146">            return false;</span>
         }
     }
     
@@ -156,22 +155,22 @@ public class TOTPUtil {
      * @return 6-digit TOTP code
      */
     public static String getTOTPCode(String secret) {
-<span class="fc bfc" id="L159" title="All 4 branches covered.">        if (secret == null || secret.trim().isEmpty()) {</span>
-<span class="fc" id="L160">            throw new IllegalArgumentException(&quot;Secret cannot be null or empty&quot;);</span>
+<span class="fc bfc" id="L158" title="All 4 branches covered.">        if (secret == null || secret.trim().isEmpty()) {</span>
+<span class="fc" id="L159">            throw new IllegalArgumentException(&quot;Secret cannot be null or empty&quot;);</span>
         }
-<span class="fc bfc" id="L162" title="All 2 branches covered.">        if (!isValidSecret(secret.trim())) {</span>
-<span class="fc" id="L163">            throw new IllegalArgumentException(&quot;Invalid Base32 secret format&quot;);</span>
+<span class="fc bfc" id="L161" title="All 2 branches covered.">        if (!isValidSecret(secret.trim())) {</span>
+<span class="fc" id="L162">            throw new IllegalArgumentException(&quot;Invalid Base32 secret format&quot;);</span>
         }
         
         try {
-<span class="fc" id="L167">            Base32 base32 = new Base32();</span>
-<span class="fc" id="L168">            byte[] decodedKey = base32.decode(secret.trim());</span>
-<span class="fc" id="L169">            long currentTimeStep = Instant.now().getEpochSecond() / TIME_STEP.getSeconds();</span>
+<span class="fc" id="L166">            Base32 base32 = new Base32();</span>
+<span class="fc" id="L167">            byte[] decodedKey = base32.decode(secret.trim());</span>
+<span class="fc" id="L168">            long currentTimeStep = Instant.now().getEpochSecond() / TIME_STEP.getSeconds();</span>
             
-<span class="fc" id="L171">            return generateTOTPCode(decodedKey, currentTimeStep);</span>
-<span class="nc" id="L172">        } catch (Exception e) {</span>
-<span class="nc" id="L173">            System.err.println(&quot;Error generating TOTP code: &quot; + e.getMessage());</span>
-<span class="nc" id="L174">            return null;</span>
+<span class="fc" id="L170">            return generateTOTPCode(decodedKey, currentTimeStep);</span>
+<span class="nc" id="L171">        } catch (Exception e) {</span>
+<span class="nc" id="L172">            System.err.println(&quot;Error generating TOTP code: &quot; + e.getMessage());</span>
+<span class="nc" id="L173">            return null;</span>
         }
     }
     
@@ -188,30 +187,30 @@ public class TOTPUtil {
             throws NoSuchAlgorithmException, InvalidKeyException {
         
         // Convert time step to byte array
-<span class="fc" id="L191">        byte[] data = new byte[8];</span>
-<span class="fc" id="L192">        long value = timeStep;</span>
-<span class="fc bfc" id="L193" title="All 2 branches covered.">        for (int i = 7; i &gt;= 0; i--) {</span>
-<span class="fc" id="L194">            data[i] = (byte) (value &amp; 0xFF);</span>
-<span class="fc" id="L195">            value &gt;&gt;= 8;</span>
+<span class="fc" id="L190">        byte[] data = new byte[8];</span>
+<span class="fc" id="L191">        long value = timeStep;</span>
+<span class="fc bfc" id="L192" title="All 2 branches covered.">        for (int i = 7; i &gt;= 0; i--) {</span>
+<span class="fc" id="L193">            data[i] = (byte) (value &amp; 0xFF);</span>
+<span class="fc" id="L194">            value &gt;&gt;= 8;</span>
         }
         
         // Generate HMAC-SHA1 hash
-<span class="fc" id="L199">        SecretKeySpec signKey = new SecretKeySpec(key, ALGORITHM);</span>
-<span class="fc" id="L200">        Mac mac = Mac.getInstance(ALGORITHM);</span>
-<span class="fc" id="L201">        mac.init(signKey);</span>
-<span class="fc" id="L202">        byte[] hash = mac.doFinal(data);</span>
+<span class="fc" id="L198">        SecretKeySpec signKey = new SecretKeySpec(key, ALGORITHM);</span>
+<span class="fc" id="L199">        Mac mac = Mac.getInstance(ALGORITHM);</span>
+<span class="fc" id="L200">        mac.init(signKey);</span>
+<span class="fc" id="L201">        byte[] hash = mac.doFinal(data);</span>
         
         // Dynamic truncation (RFC 4226)
-<span class="fc" id="L205">        int offset = hash[hash.length - 1] &amp; 0x0F;</span>
-<span class="fc" id="L206">        int binary = ((hash[offset] &amp; 0x7F) &lt;&lt; 24) |</span>
+<span class="fc" id="L204">        int offset = hash[hash.length - 1] &amp; 0x0F;</span>
+<span class="fc" id="L205">        int binary = ((hash[offset] &amp; 0x7F) &lt;&lt; 24) |</span>
                      ((hash[offset + 1] &amp; 0xFF) &lt;&lt; 16) |
                      ((hash[offset + 2] &amp; 0xFF) &lt;&lt; 8) |
                      (hash[offset + 3] &amp; 0xFF);
         
-<span class="fc" id="L211">        int otp = binary % (int) Math.pow(10, CODE_DIGITS);</span>
+<span class="fc" id="L210">        int otp = binary % (int) Math.pow(10, CODE_DIGITS);</span>
         
         // Pad with leading zeros if necessary
-<span class="fc" id="L214">        return String.format(&quot;%0&quot; + CODE_DIGITS + &quot;d&quot;, otp);</span>
+<span class="fc" id="L213">        return String.format(&quot;%0&quot; + CODE_DIGITS + &quot;d&quot;, otp);</span>
     }
     
     /**
@@ -220,9 +219,9 @@ public class TOTPUtil {
      * @return Seconds remaining in current time window
      */
     public static long getRemainingSeconds() {
-<span class="nc" id="L223">        long currentTime = Instant.now().getEpochSecond();</span>
-<span class="nc" id="L224">        long timeStep = TIME_STEP.getSeconds();</span>
-<span class="nc" id="L225">        return timeStep - (currentTime % timeStep);</span>
+<span class="nc" id="L222">        long currentTime = Instant.now().getEpochSecond();</span>
+<span class="nc" id="L223">        long timeStep = TIME_STEP.getSeconds();</span>
+<span class="nc" id="L224">        return timeStep - (currentTime % timeStep);</span>
     }
     
     /**
@@ -232,24 +231,24 @@ public class TOTPUtil {
      * @return true if secret is valid Base32, false otherwise
      */
     public static boolean isValidSecret(String secret) {
-<span class="pc bpc" id="L235" title="2 of 4 branches missed.">        if (secret == null || secret.trim().isEmpty()) {</span>
-<span class="nc" id="L236">            return false;</span>
+<span class="pc bpc" id="L234" title="2 of 4 branches missed.">        if (secret == null || secret.trim().isEmpty()) {</span>
+<span class="nc" id="L235">            return false;</span>
         }
         
-<span class="fc" id="L239">        String trimmed = secret.trim();</span>
+<span class="fc" id="L238">        String trimmed = secret.trim();</span>
         
         // Base32 alphabet: A-Z and 2-7 (case insensitive)
         // Invalid characters: 0, 1, 8, 9
-<span class="fc bfc" id="L243" title="All 2 branches covered.">        if (!trimmed.matches(&quot;^[A-Z2-7]+$&quot;)) {</span>
-<span class="fc" id="L244">            return false;</span>
+<span class="fc bfc" id="L242" title="All 2 branches covered.">        if (!trimmed.matches(&quot;^[A-Z2-7]+$&quot;)) {</span>
+<span class="fc" id="L243">            return false;</span>
         }
         
         try {
-<span class="fc" id="L248">            Base32 base32 = new Base32();</span>
-<span class="fc" id="L249">            byte[] decoded = base32.decode(trimmed);</span>
-<span class="pc bpc" id="L250" title="2 of 4 branches missed.">            return decoded != null &amp;&amp; decoded.length &gt; 0;</span>
-<span class="nc" id="L251">        } catch (Exception e) {</span>
-<span class="nc" id="L252">            return false;</span>
+<span class="fc" id="L247">            Base32 base32 = new Base32();</span>
+<span class="fc" id="L248">            byte[] decoded = base32.decode(trimmed);</span>
+<span class="pc bpc" id="L249" title="2 of 4 branches missed.">            return decoded != null &amp;&amp; decoded.length &gt; 0;</span>
+<span class="nc" id="L250">        } catch (Exception e) {</span>
+<span class="nc" id="L251">            return false;</span>
         }
     }
     
@@ -259,15 +258,15 @@ public class TOTPUtil {
      * @return String describing TOTP configuration
      */
     public static String getTOTPConfiguration() {
-<span class="nc" id="L262">        return String.format(</span>
+<span class="nc" id="L261">        return String.format(</span>
             &quot;TOTP Configuration:\n&quot; +
             &quot;- Algorithm: %s\n&quot; +
             &quot;- Time Step: %d seconds\n&quot; +
             &quot;- Code Digits: %d\n&quot; +
             &quot;- Issuer: %s&quot;,
             ALGORITHM,
-<span class="nc" id="L269">            TIME_STEP.getSeconds(),</span>
-<span class="nc" id="L270">            CODE_DIGITS,</span>
+<span class="nc" id="L268">            TIME_STEP.getSeconds(),</span>
+<span class="nc" id="L269">            CODE_DIGITS,</span>
             ISSUER
         );
     }
@@ -281,22 +280,22 @@ public class TOTPUtil {
      * @return QR code image URL
      */
     public static String generateQRCodeImageURL(String username, String secret) {
-<span class="nc bnc" id="L284" title="All 4 branches missed.">        if (username == null || username.trim().isEmpty()) {</span>
-<span class="nc" id="L285">            throw new IllegalArgumentException(&quot;Username cannot be null or empty&quot;);</span>
+<span class="nc bnc" id="L283" title="All 4 branches missed.">        if (username == null || username.trim().isEmpty()) {</span>
+<span class="nc" id="L284">            throw new IllegalArgumentException(&quot;Username cannot be null or empty&quot;);</span>
         }
-<span class="nc bnc" id="L287" title="All 4 branches missed.">        if (secret == null || secret.trim().isEmpty()) {</span>
-<span class="nc" id="L288">            throw new IllegalArgumentException(&quot;Secret cannot be null or empty&quot;);</span>
+<span class="nc bnc" id="L286" title="All 4 branches missed.">        if (secret == null || secret.trim().isEmpty()) {</span>
+<span class="nc" id="L287">            throw new IllegalArgumentException(&quot;Secret cannot be null or empty&quot;);</span>
         }
         
-<span class="nc" id="L291">        String otpauthURL = generateQRCodeURL(username, secret);</span>
+<span class="nc" id="L290">        String otpauthURL = generateQRCodeURL(username, secret);</span>
         try {
-<span class="nc" id="L293">            String encodedURL = URLEncoder.encode(otpauthURL, StandardCharsets.UTF_8.toString());</span>
-<span class="nc" id="L294">            return String.format(</span>
+<span class="nc" id="L292">            String encodedURL = URLEncoder.encode(otpauthURL, &quot;UTF-8&quot;);</span>
+<span class="nc" id="L293">            return String.format(</span>
                 &quot;https://chart.googleapis.com/chart?chs=200x200&amp;chld=M|0&amp;cht=qr&amp;chl=%s&quot;,
                 encodedURL
             );
-<span class="nc" id="L298">        } catch (UnsupportedEncodingException e) {</span>
-<span class="nc" id="L299">            throw new RuntimeException(&quot;UTF-8 encoding not supported&quot;, e);</span>
+<span class="nc" id="L297">        } catch (UnsupportedEncodingException e) {</span>
+<span class="nc" id="L298">            throw new RuntimeException(&quot;UTF-8 encoding not supported&quot;, e);</span>
         }
     }
 }

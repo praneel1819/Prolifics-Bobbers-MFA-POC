@@ -1,11 +1,11 @@
 GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
-MFA POC - Multi-Factor Authentication Proof of Concept,com.prolifics.mfa.util,AuditLogger,196,234,24,28,55,60,24,20,10,8
-MFA POC - Multi-Factor Authentication Proof of Concept,com.prolifics.mfa.util,PasswordUtil,127,159,26,14,35,30,19,9,5,3
-MFA POC - Multi-Factor Authentication Proof of Concept,com.prolifics.mfa.util,TOTPUtil,134,338,18,34,31,63,18,19,4,7
-MFA POC - Multi-Factor Authentication Proof of Concept,com.prolifics.mfa.model,User,86,65,14,2,22,20,19,11,11,11
-MFA POC - Multi-Factor Authentication Proof of Concept,com.prolifics.mfa.model,AuditLog,42,221,6,16,20,48,13,19,7,14
-MFA POC - Multi-Factor Authentication Proof of Concept,com.prolifics.mfa.repository,CSVUserRepository,192,325,39,39,55,79,33,23,9,8
-MFA POC - Multi-Factor Authentication Proof of Concept,com.prolifics.mfa.servlet,MFAVerifyServlet,382,0,48,0,84,0,29,0,5,0
-MFA POC - Multi-Factor Authentication Proof of Concept,com.prolifics.mfa.servlet,MFASetupServlet,359,0,36,0,79,0,23,0,5,0
-MFA POC - Multi-Factor Authentication Proof of Concept,com.prolifics.mfa.servlet,LoginServlet,274,0,36,0,60,0,23,0,5,0
-MFA POC - Multi-Factor Authentication Proof of Concept,com.prolifics.mfa.servlet,LogoutServlet,128,0,22,0,34,0,17,0,6,0
+MFA POC - Multi-Factor Authentication Proof of Concept,com.prolifics.mfa.util,AuditLogger,226,245,24,28,55,60,24,20,10,8
+MFA POC - Multi-Factor Authentication Proof of Concept,com.prolifics.mfa.util,PasswordUtil,139,166,26,14,35,30,19,9,5,3
+MFA POC - Multi-Factor Authentication Proof of Concept,com.prolifics.mfa.util,TOTPUtil,145,336,18,34,31,63,18,19,4,7
+MFA POC - Multi-Factor Authentication Proof of Concept,com.prolifics.mfa.model,User,119,65,14,2,22,20,19,11,11,11
+MFA POC - Multi-Factor Authentication Proof of Concept,com.prolifics.mfa.model,AuditLog,48,254,6,16,20,48,13,19,7,14
+MFA POC - Multi-Factor Authentication Proof of Concept,com.prolifics.mfa.repository,CSVUserRepository,216,337,39,39,55,79,33,23,9,8
+MFA POC - Multi-Factor Authentication Proof of Concept,com.prolifics.mfa.servlet,MFAVerifyServlet,436,0,48,0,84,0,29,0,5,0
+MFA POC - Multi-Factor Authentication Proof of Concept,com.prolifics.mfa.servlet,MFASetupServlet,401,0,36,0,79,0,23,0,5,0
+MFA POC - Multi-Factor Authentication Proof of Concept,com.prolifics.mfa.servlet,LoginServlet,292,0,36,0,60,0,23,0,5,0
+MFA POC - Multi-Factor Authentication Proof of Concept,com.prolifics.mfa.servlet,LogoutServlet,140,0,22,0,34,0,17,0,6,0
