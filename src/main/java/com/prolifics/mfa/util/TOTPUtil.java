@@ -83,10 +83,14 @@ public class TOTPUtil {
                 TIME_STEP.getSeconds()
             );
             
-            // Return Google Charts API URL - encode only the otpauth URL for the chl parameter
+            // URL encode the entire otpauth URL for QR code API
+            String encodedOtpauthURL = URLEncoder.encode(otpauthURL, "UTF-8");
+            
+            // Use QR Server API (free alternative to deprecated Google Charts API)
+            // https://goqr.me/api/ - Free QR code generation API
             return String.format(
-                "https://chart.googleapis.com/chart?chs=200x200&chld=M|0&cht=qr&chl=%s",
-                otpauthURL
+                "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=%s",
+                encodedOtpauthURL
             );
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException("UTF-8 encoding not supported", e);
