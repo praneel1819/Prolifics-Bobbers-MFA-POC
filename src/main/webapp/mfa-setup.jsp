@@ -63,7 +63,7 @@
             <!-- QR Code Display -->
             <% if (qrCodeURL != null && !qrCodeURL.isEmpty()) { %>
                 <div class="qr-code-container">
-                    <img src="<%= qrCodeURL %>" alt="QR Code for MFA Setup">
+                    <img src="<%= request.getContextPath() %>/qr-code" alt="QR Code for MFA Setup" style="border: 2px solid #ddd; padding: 10px; background: white;">
                     
                     <% if (mfaSecret != null && !mfaSecret.isEmpty()) { %>
                         <div class="secret-key">

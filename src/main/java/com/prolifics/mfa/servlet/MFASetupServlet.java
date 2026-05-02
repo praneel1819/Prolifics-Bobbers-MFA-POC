@@ -65,7 +65,7 @@ public class MFASetupServlet extends HttpServlet {
      * @throws IOException if I/O error occurs
      */
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) 
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
         HttpSession session = request.getSession(false);
@@ -82,9 +82,15 @@ public class MFASetupServlet extends HttpServlet {
         // Check if user already has MFA configured
         if (user.hasMFA()) {
             // User already has MFA - redirect to verification
+            auditLogger.log(user.getUsername(), "MFA_SETUP", "FAILED", ipAddress,
+                          "User redirected to MFA verify - MFA already configured");
             response.sendRedirect(request.getContextPath() + "/mfa-verify");
             return;
         }
+        
+        // Log that we're starting MFA setup
+        auditLogger.log(user.getUsername(), "MFA_SETUP", "INITIATED", ipAddress,
+                      "User accessing MFA setup page");
         
         try {
             // Generate new TOTP secret

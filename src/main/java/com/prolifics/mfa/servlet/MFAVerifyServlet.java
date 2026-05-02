@@ -64,7 +64,7 @@ public class MFAVerifyServlet extends HttpServlet {
      * @throws IOException if I/O error occurs
      */
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) 
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
         HttpSession session = request.getSession(false);
@@ -76,10 +76,13 @@ public class MFAVerifyServlet extends HttpServlet {
         }
         
         User user = (User) session.getAttribute("user");
+        String ipAddress = getClientIpAddress(request);
         
         // Check if user has MFA configured
         if (!user.hasMFA()) {
             // User needs to set up MFA first
+            auditLogger.log(user.getUsername(), "MFA_VERIFY", "FAILED", ipAddress,
+                          "User redirected to MFA setup - no MFA configured");
             response.sendRedirect(request.getContextPath() + "/mfa-setup");
             return;
         }
